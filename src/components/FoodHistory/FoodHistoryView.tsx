@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import type { FoodEntry, FoodCategory } from '../../types';
-import { FOOD_CATEGORIES, ENJOYMENT_LEVELS, ALLERGENS } from '../../utils/constants';
+import { FOOD_CATEGORIES } from '../../utils/constants';
 import FoodEntryCard from '../FoodEntry/FoodEntryCard';
 
 interface FoodHistoryViewProps {
@@ -10,26 +10,17 @@ interface FoodHistoryViewProps {
 }
 
 type SortBy = 'date_desc' | 'date_asc' | 'name' | 'enjoyment';
-type FilterAllergen = string | 'all' | 'none';
 
 export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryViewProps) {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<FoodCategory | 'all'>('all');
-  const [filterAllergen, setFilterAllergen] = useState<FilterAllergen>('all');
   const [filterReaction, setFilterReaction] = useState<'all' | 'reaction' | 'no_reaction'>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date_desc');
   const [showOnlyFirst, setShowOnlyFirst] = useState(false);
 
-  const uniqueFoods = useMemo(() => {
-    const map = new Map<string, FoodEntry>();
-    entries.forEach(e => {
-      const key = e.foodName.toLowerCase();
-      if (!map.has(key) || e.date < map.get(key)!.date) {
-        map.set(key, e);
-      }
-    });
-    return map;
-  }, [entries]);
+  const uniqueFoodCount = useMemo(() =>
+    new Set(entries.map(e => e.foodName.toLowerCase())).size,
+  [entries]);
 
   const filtered = useMemo(() => {
     let result = [...entries];
@@ -41,14 +32,6 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
 
     if (filterCategory !== 'all') {
       result = result.filter(e => e.foodCategory === filterCategory);
-    }
-
-    if (filterAllergen !== 'all') {
-      if (filterAllergen === 'none') {
-        result = result.filter(e => e.allergens.length === 0);
-      } else {
-        result = result.filter(e => e.allergens.includes(filterAllergen));
-      }
     }
 
     if (filterReaction !== 'all') {
@@ -71,7 +54,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
     });
 
     return result;
-  }, [entries, search, filterCategory, filterAllergen, filterReaction, sortBy, showOnlyFirst]);
+  }, [entries, search, filterCategory, filterReaction, sortBy, showOnlyFirst]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -141,7 +124,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
 
       {/* Summary */}
       <p className="text-xs text-gray-400">
-        {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'} · {uniqueFoods.size} unique foods tried
+        {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'} · {uniqueFoodCount} unique foods tried
       </p>
 
       {/* Results */}

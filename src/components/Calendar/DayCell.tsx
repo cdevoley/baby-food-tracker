@@ -1,4 +1,3 @@
-import React from 'react';
 import type { FoodEntry } from '../../types';
 import { FOOD_CATEGORIES } from '../../utils/constants';
 
@@ -13,10 +12,9 @@ interface DayCellProps {
 
 export default function DayCell({ date, dayNumber, isToday, isCurrentMonth, entries, onClick }: DayCellProps) {
   const hasReaction = entries.some(e => e.hadReaction);
-  const hasAllergen = entries.some(e => e.allergens.length > 0);
   const hasFirstIntro = entries.some(e => e.isFirstIntroduction);
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryEmoji = (category: string) => {
     return FOOD_CATEGORIES.find(c => c.id === category)?.emoji ?? '🍽️';
   };
 
@@ -39,7 +37,7 @@ export default function DayCell({ date, dayNumber, isToday, isCurrentMonth, entr
         <div className="flex flex-wrap gap-0.5">
           {entries.slice(0, 3).map(entry => (
             <span key={entry.id} className="text-xs leading-none" title={entry.foodName}>
-              {getCategoryColor(entry.foodCategory)}
+              {getCategoryEmoji(entry.foodCategory)}
             </span>
           ))}
           {entries.length > 3 && (

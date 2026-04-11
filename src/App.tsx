@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { View } from './types';
 import { useFoodEntries } from './hooks/useFoodEntries';
 import Header from './components/Layout/Header';

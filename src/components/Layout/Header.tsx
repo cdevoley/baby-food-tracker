@@ -1,4 +1,3 @@
-import React from 'react';
 import type { View } from '../../types';
 
 interface HeaderProps {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import type { FoodEntry, FoodCategory, Texture, TimeOfDay, AmountEaten, EnjoymentLevel, ReactionDelay } from '../../types';
 import { ALLERGENS, FOOD_CATEGORIES, TEXTURES, TIMES_OF_DAY, AMOUNTS, ENJOYMENT_LEVELS, SYMPTOMS } from '../../utils/constants';

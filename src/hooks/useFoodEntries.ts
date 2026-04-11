@@ -65,6 +65,5 @@ export function useFoodEntries() {
     getEntriesForMonth,
     getFoodNames,
     isFirstIntroduction,
-    setEntries,
   };
 }

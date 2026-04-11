@@ -36,8 +36,24 @@ export function importData(file: File): Promise<FoodEntry[]> {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = JSON.parse(e.target?.result as string) as FoodEntry[];
-        resolve(data);
+        const data = JSON.parse(e.target?.result as string);
+        if (!Array.isArray(data)) {
+          reject(new Error('Invalid file format: expected an array of entries'));
+          return;
+        }
+        const entries = data.filter(
+          (item): item is FoodEntry =>
+            item !== null &&
+            typeof item === 'object' &&
+            typeof item.id === 'string' &&
+            typeof item.date === 'string' &&
+            typeof item.foodName === 'string'
+        );
+        if (entries.length === 0 && data.length > 0) {
+          reject(new Error('Invalid file format: no valid food entries found'));
+          return;
+        }
+        resolve(entries);
       } catch {
         reject(new Error('Invalid file format'));
       }

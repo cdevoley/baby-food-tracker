@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { FoodEntry } from '../../types';
 import { ALLERGENS, ENJOYMENT_LEVELS, FOOD_CATEGORIES, AMOUNTS, TEXTURES, TIMES_OF_DAY, SYMPTOMS } from '../../utils/constants';
 

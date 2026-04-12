@@ -21,6 +21,15 @@ export interface FoodEntry {
   symptoms: string[]; // symptom IDs from SYMPTOMS constant
   notes: string;
   createdAt: string; // ISO timestamp
+  feedingTime?: string; // "HH:MM" 24h format, e.g. "07:30"
+  nutrition?: {
+    calories: number;
+    protein: number; // grams
+    carbs: number;   // grams
+    fat: number;     // grams
+    fiber: number;   // grams
+  };
+  photoAnalysis?: string; // one-sentence AI description from Vision
 }
 
 export type View = 'calendar' | 'history' | 'stats';

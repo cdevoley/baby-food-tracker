@@ -35,7 +35,7 @@ export default function FoodEntryCard({ entry, onDelete }: FoodEntryCardProps) {
               )}
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-              <span>{time?.emoji} {time?.label}</span>
+              <span>{entry.feedingTime ? `${entry.feedingTime} ${time?.emoji}` : `${time?.emoji} ${time?.label}`}</span>
               <span>·</span>
               <span className={`chip ${enjoyment?.color}`}>{enjoyment?.emoji} {enjoyment?.label}</span>
             </div>
@@ -102,10 +102,33 @@ export default function FoodEntryCard({ entry, onDelete }: FoodEntryCardProps) {
             </div>
           )}
 
-          {entry.notes && (
+          {entry.nutrition && (
+            <div>
+              <span className="text-gray-400 text-xs uppercase font-medium block mb-1">Nutrition (per 100g)</span>
+              <div className="grid grid-cols-5 gap-1 text-center">
+                {[
+                  { label: 'Cal', value: entry.nutrition.calories },
+                  { label: 'Protein', value: `${entry.nutrition.protein}g` },
+                  { label: 'Carbs', value: `${entry.nutrition.carbs}g` },
+                  { label: 'Fat', value: `${entry.nutrition.fat}g` },
+                  { label: 'Fiber', value: `${entry.nutrition.fiber}g` },
+                ].map(item => (
+                  <div key={item.label} className="bg-sage-50 rounded-lg p-1.5">
+                    <p className="text-xs font-semibold text-sage-700">{item.value}</p>
+                    <p className="text-xs text-gray-400">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(entry.notes || entry.photoAnalysis) && (
             <div>
               <span className="text-gray-400 text-xs uppercase font-medium block mb-1">Notes</span>
-              <p className="text-sm text-gray-700">{entry.notes}</p>
+              {entry.notes && <p className="text-sm text-gray-700">{entry.notes}</p>}
+              {entry.photoAnalysis && (
+                <p className="text-xs text-gray-400 mt-0.5 italic">📷 {entry.photoAnalysis}</p>
+              )}
             </div>
           )}
 

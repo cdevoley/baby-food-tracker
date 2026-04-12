@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import type { FoodEntry, FoodCategory, Texture, TimeOfDay, AmountEaten, EnjoymentLevel, ReactionDelay } from '../../types';
+import type { FoodEntry, FoodCategory, Texture, AmountEaten, EnjoymentLevel, ReactionDelay } from '../../types';
 import { ALLERGENS, FOOD_CATEGORIES, TEXTURES, TIMES_OF_DAY, AMOUNTS, ENJOYMENT_LEVELS, SYMPTOMS } from '../../utils/constants';
+import { analyzeFood, analyzeFoodImage, deriveTimeOfDay, AI_ENABLED } from '../../utils/ai';
 
 interface AddFoodModalProps {
   date: string;
@@ -19,13 +20,21 @@ const SUGGESTED_FOODS = [
 
 type Step = 'food' | 'details' | 'reaction' | 'notes';
 
+function Spinner({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+    </svg>
+  );
+}
+
 export default function AddFoodModal({ date, onClose, onSave, isFirstIntroduction }: AddFoodModalProps) {
   const [step, setStep] = useState<Step>('food');
   const [foodName, setFoodName] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [category, setCategory] = useState<FoodCategory>('vegetables');
   const [texture, setTexture] = useState<Texture>('puree');
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning');
   const [amountEaten, setAmountEaten] = useState<AmountEaten>('a_little');
   const [enjoyment, setEnjoyment] = useState<EnjoymentLevel>('neutral');
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
@@ -34,6 +43,30 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
   const [reactionDelay, setReactionDelay] = useState<ReactionDelay>('immediate');
   const [notes, setNotes] = useState('');
 
+  // Feature 1: actual time picker (defaults to current time)
+  const [feedingTime, setFeedingTime] = useState<string>(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  });
+  const timeOfDay = deriveTimeOfDay(feedingTime);
+
+  // Feature 2: AI analysis state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestedCategory, setAiSuggestedCategory] = useState(false);
+  const [aiSuggestedAllergens, setAiSuggestedAllergens] = useState(false);
+  const [nutrition, setNutrition] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; fiber_g: number } | null>(null);
+
+  // Feature 3: photo capture state
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoAnalysis, setPhotoAnalysis] = useState('');
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const aiDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup debounce on unmount
+  useEffect(() => () => { if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current); }, []);
+
+  // Suggestions from static list
   useEffect(() => {
     if (foodName.length >= 2) {
       const q = foodName.toLowerCase();
@@ -43,8 +76,73 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
     }
   }, [foodName]);
 
+  const triggerAiAnalysis = async (name: string) => {
+    setAiLoading(true);
+    const result = await analyzeFood(name);
+    setAiLoading(false);
+    if (result) {
+      setCategory(result.category);
+      setAiSuggestedCategory(true);
+      if (result.allergens.length > 0) {
+        setSelectedAllergens(result.allergens);
+        setAiSuggestedAllergens(true);
+      }
+      setNutrition(result.nutrition);
+    }
+  };
+
+  const handleFoodNameChange = (value: string) => {
+    setFoodName(value);
+    setAiSuggestedCategory(false);
+    setAiSuggestedAllergens(false);
+    if (AI_ENABLED) {
+      if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
+      if (value.trim().length >= 3) {
+        aiDebounceRef.current = setTimeout(() => triggerAiAnalysis(value.trim()), 800);
+      }
+    }
+  };
+
+  const handlePhotoCapture = async (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const dataUrl = evt.target?.result as string;
+      setPhotoPreviewUrl(dataUrl);
+      const [meta, base64] = dataUrl.split(',');
+      const rawMime = meta.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
+      const mimeType = (['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(rawMime)
+        ? rawMime
+        : 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+
+      setPhotoLoading(true);
+      const result = await analyzeFoodImage(base64, mimeType);
+      setPhotoLoading(false);
+
+      if (result) {
+        if (result.foodName) {
+          setFoodName(result.foodName);
+          setAiSuggestedCategory(false);
+          setAiSuggestedAllergens(false);
+        }
+        setCategory(result.category);
+        setAiSuggestedCategory(true);
+        if (result.allergens.length > 0) {
+          setSelectedAllergens(result.allergens);
+          setAiSuggestedAllergens(true);
+        }
+        if (result.notes) setPhotoAnalysis(result.notes);
+        // Fetch nutrition for the detected food name
+        if (result.foodName && AI_ENABLED) {
+          await triggerAiAnalysis(result.foodName);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const toggleAllergen = (id: string) => {
     setSelectedAllergens(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
+    setAiSuggestedAllergens(false);
   };
 
   const toggleSymptom = (id: string) => {
@@ -61,6 +159,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
       foodCategory: category,
       texture,
       timeOfDay,
+      feedingTime,
       amountEaten,
       enjoyment,
       allergens: selectedAllergens,
@@ -69,6 +168,10 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
       reactionDelay: hadReaction ? reactionDelay : null,
       symptoms: hadReaction ? selectedSymptoms : [],
       notes: notes.trim(),
+      nutrition: nutrition
+        ? { calories: nutrition.calories, protein: nutrition.protein_g, carbs: nutrition.carbs_g, fat: nutrition.fat_g, fiber: nutrition.fiber_g }
+        : undefined,
+      photoAnalysis: photoAnalysis.trim() || undefined,
     });
   };
 
@@ -92,6 +195,8 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
     const prev = STEPS[stepIdx - 1];
     if (prev) setStep(prev);
   };
+
+  const timeLabel = TIMES_OF_DAY.find(t => t.id === timeOfDay);
 
   return (
     <div className="fixed inset-0 bg-black/40 z-30 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
@@ -127,20 +232,58 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
             <>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">What food did baby try? *</label>
-                <input
-                  type="text"
-                  value={foodName}
-                  onChange={e => setFoodName(e.target.value)}
-                  placeholder="e.g. Sweet potato"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100"
-                  autoFocus
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={foodName}
+                    onChange={e => handleFoodNameChange(e.target.value)}
+                    placeholder="e.g. Sweet potato"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 pr-10"
+                    autoFocus
+                  />
+                  {AI_ENABLED && (
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-sage-500 transition-colors"
+                      aria-label="Take or upload a photo for AI food detection"
+                    >
+                      📷
+                    </button>
+                  )}
+                </div>
+
+                {/* Hidden file input for camera */}
+                {AI_ENABLED && (
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handlePhotoCapture(file);
+                      e.target.value = '';
+                    }}
+                  />
+                )}
+
+                {/* AI loading indicator */}
+                {aiLoading && (
+                  <div className="flex items-center gap-1.5 mt-1.5 text-xs text-sage-600">
+                    <Spinner className="w-3 h-3" />
+                    Analyzing...
+                  </div>
+                )}
+
+                {/* Suggestions */}
                 {suggestions.length > 0 && (
                   <div className="mt-1 border border-gray-200 rounded-xl overflow-hidden">
                     {suggestions.map(s => (
                       <button
                         key={s}
-                        onClick={() => { setFoodName(s); setSuggestions([]); }}
+                        onClick={() => { setFoodName(s); setSuggestions([]); handleFoodNameChange(s); }}
                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-sage-50 transition-colors border-b border-gray-100 last:border-0"
                       >
                         {s}
@@ -148,18 +291,48 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                     ))}
                   </div>
                 )}
+
+                {/* Photo thumbnail */}
+                {photoPreviewUrl && (
+                  <div className="relative mt-2 inline-block">
+                    <img
+                      src={photoPreviewUrl}
+                      alt="Captured food"
+                      className="w-20 h-20 object-cover rounded-xl border border-gray-200"
+                    />
+                    {photoLoading && (
+                      <div className="absolute inset-0 bg-white/70 rounded-xl flex flex-col items-center justify-center gap-1">
+                        <Spinner className="w-4 h-4 text-sage-500" />
+                        <span className="text-xs text-sage-600 font-medium">Analyzing photo...</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => { setPhotoPreviewUrl(null); setPhotoAnalysis(''); }}
+                      className="absolute -top-1.5 -right-1.5 bg-gray-200 hover:bg-gray-300 rounded-full w-5 h-5 flex items-center justify-center text-xs text-gray-600"
+                      aria-label="Remove photo"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
                 {isFirstTry && foodName.trim() && (
                   <p className="text-xs text-sage-600 mt-1.5 font-medium">⭐ This is baby's first time trying this food!</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Food category</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                  Food category
+                  {aiSuggestedCategory && (
+                    <span className="chip bg-sage-100 text-sage-600 font-normal">✨ AI suggested</span>
+                  )}
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {FOOD_CATEGORIES.map(cat => (
                     <button
                       key={cat.id}
-                      onClick={() => setCategory(cat.id)}
+                      onClick={() => { setCategory(cat.id); setAiSuggestedCategory(false); }}
                       className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all text-sm ${
                         category === cat.id ? 'border-sage-400 bg-sage-50' : 'border-gray-200 hover:border-sage-200'
                       }`}
@@ -172,7 +345,12 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Contains allergens?</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                  Contains allergens?
+                  {aiSuggestedAllergens && (
+                    <span className="chip bg-sage-100 text-sage-600 font-normal">✨ AI suggested</span>
+                  )}
+                </label>
                 <div className="flex flex-wrap gap-1.5">
                   {ALLERGENS.map(allergen => (
                     <button
@@ -213,20 +391,16 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Time of day</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {TIMES_OF_DAY.map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => setTimeOfDay(t.id)}
-                      className={`flex items-center gap-2 p-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
-                        timeOfDay === t.id ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-sage-200'
-                      }`}
-                    >
-                      <span>{t.emoji}</span> {t.label}
-                    </button>
-                  ))}
-                </div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Feeding time</label>
+                <input
+                  type="time"
+                  value={feedingTime}
+                  onChange={e => setFeedingTime(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  {timeLabel?.emoji} {timeLabel?.label} session
+                </p>
               </div>
 
               <div>
@@ -360,12 +534,37 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
               <div className="bg-sage-50 rounded-xl p-3 space-y-1 text-sm">
                 <p className="font-semibold text-sage-700 mb-2">Summary</p>
                 <p><span className="text-gray-500">Food:</span> <span className="font-medium capitalize">{foodName}</span> {isFirstTry && '⭐'}</p>
+                <p>
+                  <span className="text-gray-500">Time:</span>{' '}
+                  <span className="font-medium">{feedingTime} · {timeLabel?.emoji} {timeLabel?.label}</span>
+                </p>
                 <p><span className="text-gray-500">Enjoyment:</span> {ENJOYMENT_LEVELS.find(e => e.id === enjoyment)?.emoji} {ENJOYMENT_LEVELS.find(e => e.id === enjoyment)?.label}</p>
                 <p><span className="text-gray-500">Amount:</span> {AMOUNTS.find(a => a.id === amountEaten)?.label}</p>
                 {selectedAllergens.length > 0 && (
                   <p><span className="text-gray-500">Allergens:</span> {selectedAllergens.map(id => ALLERGENS.find(a => a.id === id)?.label).join(', ')}</p>
                 )}
                 {hadReaction && <p className="text-amber-600">⚠️ Reaction logged</p>}
+
+                {/* Nutrition grid */}
+                {nutrition && (
+                  <div className="mt-2 pt-2 border-t border-sage-200">
+                    <p className="text-xs text-gray-400 uppercase font-medium mb-1.5">Nutrition (per 100g) · ✨ AI estimate</p>
+                    <div className="grid grid-cols-5 gap-1 text-center">
+                      {[
+                        { label: 'Cal', value: nutrition.calories },
+                        { label: 'Protein', value: `${nutrition.protein_g}g` },
+                        { label: 'Carbs', value: `${nutrition.carbs_g}g` },
+                        { label: 'Fat', value: `${nutrition.fat_g}g` },
+                        { label: 'Fiber', value: `${nutrition.fiber_g}g` },
+                      ].map(item => (
+                        <div key={item.label} className="bg-white rounded-lg p-1.5">
+                          <p className="text-xs font-semibold text-sage-700">{item.value}</p>
+                          <p className="text-xs text-gray-400">{item.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

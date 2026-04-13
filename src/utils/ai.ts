@@ -59,6 +59,10 @@ Rules:
 - if the food is unknown or ambiguous, use your best estimate and category "other"`;
 
 function parseJson<T>(text: string): T {
+  // Extract the first {...} block — handles any preamble/postamble the model adds
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) return JSON.parse(match[0]) as T;
+  // Fallback: strip markdown code fences and try directly
   const stripped = text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
   return JSON.parse(stripped) as T;
 }
@@ -111,7 +115,7 @@ export async function analyzeFoodImage(
   if (!AI_ENABLED) return null;
   try {
     const message = await getClient().messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 512,
       messages: [{
         role: 'user',

@@ -111,8 +111,8 @@ export async function analyzeFoodImage(
   if (!AI_ENABLED) return null;
   try {
     const message = await getClient().messages.create({
-      model: 'claude-sonnet-4-6',  // Sonnet for better vision accuracy
-      max_tokens: 1024,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 512,
       messages: [{
         role: 'user',
         content: [
@@ -122,7 +122,28 @@ export async function analyzeFoodImage(
       }],
     });
     const text = (message.content[0] as { type: 'text'; text: string }).text;
-    return parseJson<ImageAnalysis>(text);
+    const result = parseJson<ImageAnalysis>(text);
+
+    // Fallback: if the vision pass returned no food name but wrote a description,
+    // ask the text model to extract the name from that description.
+    if (!result.foodName && result.notes) {
+      try {
+        const fallback = await getClient().messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 32,
+          messages: [{
+            role: 'user',
+            content: `Food description: "${result.notes}"\n\nWhat is the primary food item? Reply with ONLY the food name, 1–3 words, capitalized. Example: "Banana" or "Sweet potato".`,
+          }],
+        });
+        const name = (fallback.content[0] as { type: 'text'; text: string }).text.trim();
+        if (name) result.foodName = name;
+      } catch {
+        // fallback failed — result.foodName stays empty, caller will show hint
+      }
+    }
+
+    return result;
   } catch (err) {
     console.error('[analyzeFoodImage] failed:', err);
     return null;

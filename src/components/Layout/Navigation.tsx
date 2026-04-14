@@ -13,7 +13,7 @@ const NAV_ITEMS: { id: View; label: string; emoji: string }[] = [
 
 export default function Navigation({ view, onViewChange }: NavigationProps) {
   return (
-    <nav className="relative bg-white border-t border-sage-100 px-4 py-2 sticky bottom-0 z-10">
+    <nav className="relative bg-white dark:bg-stone-800 border-t border-sage-100 dark:border-stone-700 px-4 py-2 sticky bottom-0 z-10">
       <div className="max-w-lg mx-auto flex items-center justify-around">
         {NAV_ITEMS.map(item => (
           <button
@@ -21,8 +21,8 @@ export default function Navigation({ view, onViewChange }: NavigationProps) {
             onClick={() => onViewChange(item.id)}
             className={`relative flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors ${
               view === item.id
-                ? 'text-sage-600 bg-sage-50'
-                : 'text-gray-400 hover:text-gray-600'
+                ? 'text-sage-600 bg-sage-50 dark:bg-stone-700'
+                : 'text-gray-400 dark:text-stone-500 hover:text-gray-600 dark:hover:text-stone-300'
             }`}
           >
             {view === item.id && (

@@ -10,11 +10,12 @@ interface CalendarViewProps {
   onAddEntry: (entry: Omit<FoodEntry, 'id' | 'createdAt'>) => void;
   onDeleteEntry: (id: string) => void;
   isFirstIntroduction: (foodName: string, date: string) => boolean;
+  onEditEntry: (entry: FoodEntry) => void;
 }
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function CalendarView({ entries, onAddEntry, onDeleteEntry, isFirstIntroduction }: CalendarViewProps) {
+export default function CalendarView({ entries, onAddEntry, onDeleteEntry, isFirstIntroduction, onEditEntry }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -49,7 +50,7 @@ export default function CalendarView({ entries, onAddEntry, onDeleteEntry, isFir
         >
           ‹
         </button>
-        <h2 className="text-lg font-bold text-gray-700">
+        <h2 className="text-lg font-bold text-gray-700 dark:text-stone-200">
           {format(currentMonth, 'MMMM yyyy')}
         </h2>
         <button
@@ -63,7 +64,7 @@ export default function CalendarView({ entries, onAddEntry, onDeleteEntry, isFir
       {/* Day labels */}
       <div className="grid grid-cols-7 gap-1">
         {DAY_LABELS.map(day => (
-          <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
+          <div key={day} className="text-center text-xs font-semibold text-gray-400 dark:text-stone-500 py-1">
             {day}
           </div>
         ))}
@@ -88,7 +89,7 @@ export default function CalendarView({ entries, onAddEntry, onDeleteEntry, isFir
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 text-xs text-gray-500 px-1">
+      <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-stone-400 px-1">
         <span>⭐ First try</span>
         <span>⚠️ Reaction</span>
         <span>🍎 Fruit</span>
@@ -113,7 +114,7 @@ export default function CalendarView({ entries, onAddEntry, onDeleteEntry, isFir
       {selectedDate && (
         <div className="card">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-gray-700">
+            <h3 className="font-bold text-gray-700 dark:text-stone-200">
               {format(new Date(selectedDate + 'T00:00:00'), 'EEEE, MMMM d')}
             </h3>
             <button
@@ -125,7 +126,7 @@ export default function CalendarView({ entries, onAddEntry, onDeleteEntry, isFir
           </div>
 
           {selectedEntries.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-4">No foods logged this day.</p>
+            <p className="text-gray-400 dark:text-stone-500 text-sm text-center py-4">No foods logged this day.</p>
           ) : (
             <div className="flex flex-col gap-3">
               {selectedEntries.map(entry => (
@@ -133,6 +134,7 @@ export default function CalendarView({ entries, onAddEntry, onDeleteEntry, isFir
                   key={entry.id}
                   entry={entry}
                   onDelete={onDeleteEntry}
+                  onEdit={onEditEntry}
                 />
               ))}
             </div>

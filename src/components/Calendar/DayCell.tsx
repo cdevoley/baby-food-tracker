@@ -23,8 +23,8 @@ export default function DayCell({ date, dayNumber, isToday, isCurrentMonth, entr
       onClick={() => onClick(date)}
       className={`
         relative p-1.5 min-h-[72px] rounded-xl text-left transition-all border
-        ${isCurrentMonth ? 'text-gray-800' : 'text-gray-300'}
-        ${isToday ? 'border-sage-400 bg-sage-50' : 'border-transparent hover:border-sage-200 hover:bg-sage-50/50'}
+        ${isCurrentMonth ? 'text-gray-800 dark:text-stone-100' : 'text-gray-300 dark:text-stone-600'}
+        ${isToday ? 'border-sage-400 bg-sage-50 dark:bg-sage-900/30' : 'border-transparent hover:border-sage-200 dark:hover:border-stone-600 hover:bg-sage-50/50 dark:hover:bg-stone-800/50'}
         ${entries.length > 0 ? 'cursor-pointer' : 'cursor-default'}
       `}
     >
@@ -41,7 +41,7 @@ export default function DayCell({ date, dayNumber, isToday, isCurrentMonth, entr
             </span>
           ))}
           {entries.length > 3 && (
-            <span className="text-xs text-gray-400 leading-none">+{entries.length - 3}</span>
+            <span className="text-xs text-gray-400 dark:text-stone-500 leading-none">+{entries.length - 3}</span>
           )}
         </div>
       )}

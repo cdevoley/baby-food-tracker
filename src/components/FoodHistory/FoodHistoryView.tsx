@@ -4,19 +4,29 @@ import type { FoodEntry, FoodCategory } from '../../types';
 import { FOOD_CATEGORIES } from '../../utils/constants';
 import FoodEntryCard from '../FoodEntry/FoodEntryCard';
 
+interface AllergenReminder {
+  allergenId: string;
+  allergenLabel: string;
+  firstDate: string;
+  waitUntil: string;
+}
+
 interface FoodHistoryViewProps {
   entries: FoodEntry[];
   onDeleteEntry: (id: string) => void;
+  recentNewAllergens: AllergenReminder[];
+  onEditEntry: (entry: FoodEntry) => void;
 }
 
 type SortBy = 'date_desc' | 'date_asc' | 'name' | 'enjoyment';
 
-export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryViewProps) {
+export default function FoodHistoryView({ entries, onDeleteEntry, recentNewAllergens, onEditEntry }: FoodHistoryViewProps) {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<FoodCategory | 'all'>('all');
   const [filterReaction, setFilterReaction] = useState<'all' | 'reaction' | 'no_reaction'>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date_desc');
   const [showOnlyFirst, setShowOnlyFirst] = useState(false);
+  const [dismissedAllergens, setDismissedAllergens] = useState<Set<string>>(new Set());
 
   const uniqueFoodCount = useMemo(() =>
     new Set(entries.map(e => e.foodName.toLowerCase())).size,
@@ -27,7 +37,12 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
 
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter(e => e.foodName.toLowerCase().includes(q) || e.notes.toLowerCase().includes(q));
+      result = result.filter(e =>
+        e.foodName.toLowerCase().includes(q) ||
+        e.notes.toLowerCase().includes(q) ||
+        e.allergens.some(a => a.toLowerCase().includes(q)) ||
+        (e.symptoms ?? []).some(s => s.toLowerCase().includes(q))
+      );
     }
 
     if (filterCategory !== 'all') {
@@ -58,6 +73,29 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Allergen wait reminders */}
+      {recentNewAllergens
+        .filter(r => !dismissedAllergens.has(r.allergenId))
+        .map(r => (
+          <div
+            key={r.allergenId}
+            className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 flex items-start justify-between gap-2"
+          >
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              ⚠️ First gave <strong>{r.allergenLabel}</strong> on {r.firstDate}.{' '}
+              Wait 3–5 days (until <strong>{r.waitUntil}</strong>) before introducing another new allergen — unless no reaction and doctor approves.
+            </p>
+            <button
+              onClick={() => setDismissedAllergens(prev => new Set(prev).add(r.allergenId))}
+              className="text-amber-600 dark:text-amber-400 text-lg leading-none shrink-0"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        ))
+      }
+
       {/* Search */}
       <div className="relative">
         <svg
@@ -74,7 +112,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search foods or notes..."
-          className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-gray-800 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100"
+          className="w-full border border-gray-200 dark:border-stone-600 rounded-xl pl-9 pr-3 py-2.5 text-gray-800 dark:text-stone-100 bg-white dark:bg-stone-800 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100"
         />
       </div>
 
@@ -85,7 +123,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none pr-6">
             <button
               onClick={() => setFilterCategory('all')}
-              className={`chip px-3 py-1.5 flex-shrink-0 border transition-all ${filterCategory === 'all' ? 'bg-sage-100 text-sage-700 border-sage-300' : 'bg-white text-gray-500 border-gray-200'}`}
+              className={`chip px-3 py-1.5 flex-shrink-0 border transition-all ${filterCategory === 'all' ? 'bg-sage-100 text-sage-700 border-sage-300' : 'bg-white dark:bg-stone-800 text-gray-500 dark:text-stone-400 border-gray-200 dark:border-stone-600'}`}
             >
               All
             </button>
@@ -93,7 +131,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
               <button
                 key={cat.id}
                 onClick={() => setFilterCategory(cat.id)}
-                className={`chip px-3 py-1.5 flex-shrink-0 border transition-all ${filterCategory === cat.id ? `${cat.color} border-current` : 'bg-white text-gray-500 border-gray-200'}`}
+                className={`chip px-3 py-1.5 flex-shrink-0 border transition-all ${filterCategory === cat.id ? `${cat.color} border-current` : 'bg-white dark:bg-stone-800 text-gray-500 dark:text-stone-400 border-gray-200 dark:border-stone-600'}`}
               >
                 {cat.emoji} {cat.label}
               </button>
@@ -106,7 +144,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as SortBy)}
-            className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 text-gray-600 focus:outline-none focus:border-sage-400"
+            className="text-sm border border-gray-200 dark:border-stone-600 rounded-lg px-2 py-1.5 text-gray-600 dark:text-stone-300 bg-white dark:bg-stone-800 focus:outline-none focus:border-sage-400"
           >
             <option value="date_desc">Newest first</option>
             <option value="date_asc">Oldest first</option>
@@ -117,7 +155,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
           <select
             value={filterReaction}
             onChange={e => setFilterReaction(e.target.value as 'all' | 'reaction' | 'no_reaction')}
-            className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 text-gray-600 focus:outline-none focus:border-sage-400"
+            className="text-sm border border-gray-200 dark:border-stone-600 rounded-lg px-2 py-1.5 text-gray-600 dark:text-stone-300 bg-white dark:bg-stone-800 focus:outline-none focus:border-sage-400"
           >
             <option value="all">All reactions</option>
             <option value="reaction">Had reaction ⚠️</option>
@@ -126,7 +164,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
 
           <button
             onClick={() => setShowOnlyFirst(f => !f)}
-            className={`text-sm px-3 py-1.5 rounded-lg border transition-all ${showOnlyFirst ? 'bg-sage-100 text-sage-700 border-sage-300' : 'bg-white text-gray-500 border-gray-200'}`}
+            className={`text-sm px-3 py-1.5 rounded-lg border transition-all ${showOnlyFirst ? 'bg-sage-100 text-sage-700 border-sage-300' : 'bg-white dark:bg-stone-800 text-gray-500 dark:text-stone-400 border-gray-200 dark:border-stone-600'}`}
           >
             ⭐ First tries only
           </button>
@@ -143,7 +181,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
       </div>
 
       {/* Summary */}
-      <p className="text-sm text-gray-500 font-medium">
+      <p className="text-sm text-gray-500 dark:text-stone-400 font-medium">
         {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
         <span className="text-gray-400 font-normal"> · {uniqueFoodCount} unique foods tried</span>
       </p>
@@ -158,10 +196,10 @@ export default function FoodHistoryView({ entries, onDeleteEntry }: FoodHistoryV
         <div className="flex flex-col gap-3">
           {filtered.map(entry => (
             <div key={entry.id}>
-              <p className="text-xs text-gray-400 mb-1 px-1">
+              <p className="text-xs text-gray-400 dark:text-stone-500 mb-1 px-1">
                 {format(new Date(entry.date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
               </p>
-              <FoodEntryCard entry={entry} onDelete={onDeleteEntry} />
+              <FoodEntryCard entry={entry} onDelete={onDeleteEntry} onEdit={onEditEntry} />
             </div>
           ))}
         </div>

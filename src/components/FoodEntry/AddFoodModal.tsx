@@ -9,13 +9,29 @@ interface AddFoodModalProps {
   onClose: () => void;
   onSave: (entry: Omit<FoodEntry, 'id' | 'createdAt'>) => void;
   isFirstIntroduction: (foodName: string, date: string) => boolean;
+  existingEntry?: FoodEntry;
+  onUpdateEntry?: (id: string, updates: Partial<FoodEntry>) => void;
 }
 
 const SUGGESTED_FOODS = [
-  'Sweet potato', 'Avocado', 'Banana', 'Pear', 'Apple', 'Butternut squash',
-  'Peas', 'Carrots', 'Broccoli', 'Oatmeal', 'Rice cereal', 'Greek yogurt',
-  'Lentils', 'Chicken', 'Salmon', 'Egg yolk', 'Mango', 'Blueberries',
-  'Peach', 'Prunes', 'Green beans', 'Zucchini', 'Spinach', 'Tofu',
+  'Apple', 'Apricot', 'Asparagus', 'Avocado',
+  'Banana', 'Barley', 'Beans (black)', 'Beans (kidney)', 'Beef', 'Beets', 'Blueberries', 'Broccoli', 'Butternut squash',
+  'Carrot', 'Cauliflower', 'Cheese (cheddar)', 'Chicken', 'Corn', 'Cottage cheese',
+  'Edamame', 'Egg (whole)',
+  'Green beans',
+  'Hummus',
+  'Kiwi',
+  'Lentils',
+  'Mango', 'Mashed potato',
+  'Oatmeal',
+  'Papaya', 'Pasta (plain)', 'Peach', 'Pear', 'Peas', 'Plum', 'Pumpkin',
+  'Quinoa',
+  'Raspberries', 'Rice cereal', 'Ricotta',
+  'Salmon', 'Spinach', 'Strawberries', 'Sweet peas', 'Sweet potato',
+  'Toast (soft)', 'Tofu', 'Turkey',
+  'Watermelon',
+  'Yogurt (plain)',
+  'Zucchini',
 ];
 
 type Step = 'food' | 'details' | 'reaction' | 'notes';
@@ -29,22 +45,24 @@ function Spinner({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-export default function AddFoodModal({ date, onClose, onSave, isFirstIntroduction }: AddFoodModalProps) {
+export default function AddFoodModal({ date, onClose, onSave, isFirstIntroduction, existingEntry, onUpdateEntry }: AddFoodModalProps) {
+  const isEditMode = Boolean(existingEntry);
   const [step, setStep] = useState<Step>('food');
-  const [foodName, setFoodName] = useState('');
+  const [foodName, setFoodName] = useState(existingEntry?.foodName ?? '');
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [category, setCategory] = useState<FoodCategory>('vegetables');
-  const [texture, setTexture] = useState<Texture>('puree');
-  const [amountEaten, setAmountEaten] = useState<AmountEaten>('a_little');
-  const [enjoyment, setEnjoyment] = useState<EnjoymentLevel>('neutral');
-  const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
-  const [hadReaction, setHadReaction] = useState(false);
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [reactionDelay, setReactionDelay] = useState<ReactionDelay>('immediate');
-  const [notes, setNotes] = useState('');
+  const [category, setCategory] = useState<FoodCategory>(existingEntry?.foodCategory ?? 'vegetables');
+  const [texture, setTexture] = useState<Texture>(existingEntry?.texture ?? 'puree');
+  const [amountEaten, setAmountEaten] = useState<AmountEaten>(existingEntry?.amountEaten ?? 'a_little');
+  const [enjoyment, setEnjoyment] = useState<EnjoymentLevel>(existingEntry?.enjoyment ?? 'neutral');
+  const [selectedAllergens, setSelectedAllergens] = useState<string[]>(existingEntry?.allergens ?? []);
+  const [hadReaction, setHadReaction] = useState(existingEntry?.hadReaction ?? false);
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(existingEntry?.symptoms ?? []);
+  const [reactionDelay, setReactionDelay] = useState<ReactionDelay>(existingEntry?.reactionDelay ?? 'immediate');
+  const [notes, setNotes] = useState(existingEntry?.notes ?? '');
 
-  // Feature 1: actual time picker (defaults to current time)
+  // Time picker — use existing time when editing, else default to now
   const [feedingTime, setFeedingTime] = useState<string>(() => {
+    if (existingEntry?.feedingTime) return existingEntry.feedingTime;
     const now = new Date();
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   });
@@ -113,7 +131,6 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
     setPhotoError(null);
 
     // Resize via canvas — phone photos can be 5–10MB which exceeds the API limit.
-    // Canvas resize gets the image down to ≤1024px / ~200KB before sending.
     const resized = await new Promise<{ previewUrl: string; base64: string; mimeType: 'image/jpeg' }>(
       (resolve, reject) => {
         const img = new Image();
@@ -187,26 +204,47 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
 
   const handleSave = () => {
     if (!foodName.trim()) return;
-    onSave({
-      date,
-      foodName: foodName.trim(),
-      foodCategory: category,
-      texture,
-      timeOfDay,
-      feedingTime,
-      amountEaten,
-      enjoyment,
-      allergens: selectedAllergens,
-      isFirstIntroduction: isFirstTry,
-      hadReaction,
-      reactionDelay: hadReaction ? reactionDelay : null,
-      symptoms: hadReaction ? selectedSymptoms : [],
-      notes: notes.trim(),
-      nutrition: nutrition
-        ? { calories: nutrition.calories, protein: nutrition.protein_g, carbs: nutrition.carbs_g, fat: nutrition.fat_g, fiber: nutrition.fiber_g }
-        : undefined,
-      photoAnalysis: photoAnalysis.trim() || undefined,
-    });
+    if (isEditMode && existingEntry && onUpdateEntry) {
+      onUpdateEntry(existingEntry.id, {
+        foodName: foodName.trim(),
+        foodCategory: category,
+        texture,
+        timeOfDay,
+        feedingTime,
+        amountEaten,
+        enjoyment,
+        allergens: selectedAllergens,
+        hadReaction,
+        reactionDelay: hadReaction ? reactionDelay : null,
+        symptoms: hadReaction ? selectedSymptoms : [],
+        notes: notes.trim(),
+        nutrition: nutrition
+          ? { calories: nutrition.calories, protein: nutrition.protein_g, carbs: nutrition.carbs_g, fat: nutrition.fat_g, fiber: nutrition.fiber_g }
+          : existingEntry.nutrition,
+        photoAnalysis: photoAnalysis.trim() || existingEntry.photoAnalysis,
+      });
+    } else {
+      onSave({
+        date,
+        foodName: foodName.trim(),
+        foodCategory: category,
+        texture,
+        timeOfDay,
+        feedingTime,
+        amountEaten,
+        enjoyment,
+        allergens: selectedAllergens,
+        isFirstIntroduction: isFirstTry,
+        hadReaction,
+        reactionDelay: hadReaction ? reactionDelay : null,
+        symptoms: hadReaction ? selectedSymptoms : [],
+        notes: notes.trim(),
+        nutrition: nutrition
+          ? { calories: nutrition.calories, protein: nutrition.protein_g, carbs: nutrition.carbs_g, fat: nutrition.fat_g, fiber: nutrition.fiber_g }
+          : undefined,
+        photoAnalysis: photoAnalysis.trim() || undefined,
+      });
+    }
   };
 
   const STEPS: Step[] = ['food', 'details', 'reaction', 'notes'];
@@ -235,14 +273,14 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
   return (
     <div className="fixed inset-0 bg-black/40 z-30 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-stone-800 rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-3xl">
+        <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-stone-700 sticky top-0 bg-white dark:bg-stone-800 rounded-t-3xl">
           <div>
-            <h2 className="font-bold text-gray-800">Log Food</h2>
-            <p className="text-xs text-gray-400">{format(new Date(date + 'T00:00:00'), 'MMMM d, yyyy')}</p>
+            <h2 className="font-bold text-gray-800 dark:text-stone-100">{isEditMode ? 'Edit Entry' : 'Log Food'}</h2>
+            <p className="text-xs text-gray-400 dark:text-stone-400">{format(new Date(date + 'T00:00:00'), 'MMMM d, yyyy')}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
         </div>
@@ -252,7 +290,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
           {STEPS.map((s, i) => (
             <div
               key={s}
-              className={`h-1.5 flex-1 rounded-full transition-colors ${i <= stepIdx ? 'bg-sage-400' : 'bg-gray-200'}`}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${i <= stepIdx ? 'bg-sage-400' : 'bg-gray-200 dark:bg-stone-600'}`}
             />
           ))}
         </div>
@@ -272,7 +310,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                     value={foodName}
                     onChange={e => handleFoodNameChange(e.target.value)}
                     placeholder="e.g. Sweet potato"
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 pr-10"
+                    className="w-full border border-gray-200 dark:border-stone-600 rounded-xl px-3 py-2.5 text-gray-800 dark:text-stone-100 bg-white dark:bg-stone-700 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 pr-10"
                     autoFocus
                   />
                   {AI_ENABLED && (
@@ -313,12 +351,12 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
 
                 {/* Suggestions */}
                 {suggestions.length > 0 && (
-                  <div className="mt-1 border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="mt-1 border border-gray-200 dark:border-stone-600 rounded-xl overflow-hidden">
                     {suggestions.map(s => (
                       <button
                         key={s}
                         onClick={() => { setFoodName(s); setSuggestions([]); handleFoodNameChange(s); }}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-sage-50 transition-colors border-b border-gray-100 last:border-0"
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-stone-200 bg-white dark:bg-stone-700 hover:bg-sage-50 dark:hover:bg-stone-600 transition-colors border-b border-gray-100 dark:border-stone-600 last:border-0"
                       >
                         {s}
                       </button>
@@ -350,7 +388,6 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                   </div>
                 )}
 
-                {/* Photo error / hint */}
                 {photoError && (
                   <p className="text-xs text-amber-600 mt-1.5">{photoError}</p>
                 )}
@@ -435,9 +472,9 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                   type="time"
                   value={feedingTime}
                   onChange={e => setFeedingTime(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100"
+                  className="w-full border border-gray-200 dark:border-stone-600 rounded-xl px-3 py-2.5 text-gray-800 dark:text-stone-100 bg-white dark:bg-stone-700 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-400 dark:text-stone-400 mt-1">
                   {timeLabel?.emoji} {timeLabel?.label} session
                 </p>
               </div>
@@ -565,13 +602,13 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                   onChange={e => setNotes(e.target.value)}
                   placeholder="Any observations? e.g. Made funny faces but kept eating! Preferred it cold."
                   rows={4}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 resize-none"
+                  className="w-full border border-gray-200 dark:border-stone-600 rounded-xl px-3 py-2.5 text-gray-800 dark:text-stone-100 bg-white dark:bg-stone-700 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 resize-none"
                 />
               </div>
 
               {/* Summary */}
-              <div className="bg-sage-50 rounded-xl p-3 space-y-1 text-sm">
-                <p className="font-semibold text-sage-700 mb-2">Summary</p>
+              <div className="bg-sage-50 dark:bg-stone-700 rounded-xl p-3 space-y-1 text-sm">
+                <p className="font-semibold text-sage-700 dark:text-sage-400 mb-2">Summary</p>
                 <p><span className="text-gray-500">Food:</span> <span className="font-medium capitalize">{foodName}</span> {isFirstTry && '⭐'}</p>
                 <p>
                   <span className="text-gray-500">Time:</span>{' '}
@@ -610,7 +647,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
         </div>
 
         {/* Footer */}
-        <div className="flex gap-2 p-4 border-t border-gray-100 sticky bottom-0 bg-white">
+        <div className="flex gap-2 p-4 border-t border-gray-100 dark:border-stone-700 sticky bottom-0 bg-white dark:bg-stone-800">
           {stepIdx > 0 && (
             <button onClick={goPrev} className="btn-secondary flex-1">
               Back
@@ -621,7 +658,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
             disabled={!canGoNext}
             className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {stepIdx === STEPS.length - 1 ? 'Save Entry ✓' : 'Next →'}
+            {stepIdx === STEPS.length - 1 ? (isEditMode ? 'Save Changes ✓' : 'Save Entry ✓') : 'Next →'}
           </button>
         </div>
       </div>

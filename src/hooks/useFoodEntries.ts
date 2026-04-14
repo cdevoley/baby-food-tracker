@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { FoodEntry } from '../types';
 import { loadEntries, saveEntries } from '../utils/storage';
+import { ALLERGENS } from '../utils/constants';
 import {
   SUPABASE_ENABLED,
   dbLoadEntries,
@@ -98,6 +99,39 @@ export function useFoodEntries() {
     );
   }, [entries]);
 
+  const recentNewAllergens = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 5);
+
+    // Build map: allergen ID → earliest entry date
+    const firstSeen: Record<string, string> = {};
+    for (const entry of entries) {
+      for (const allergenId of entry.allergens) {
+        if (!firstSeen[allergenId] || entry.date < firstSeen[allergenId]) {
+          firstSeen[allergenId] = entry.date;
+        }
+      }
+    }
+
+    return Object.entries(firstSeen)
+      .filter(([, date]) => new Date(date + 'T00:00:00') >= cutoff)
+      .map(([allergenId, firstDate]) => {
+        const first = new Date(firstDate + 'T00:00:00');
+        const waitStart = new Date(first);
+        waitStart.setDate(first.getDate() + 3);
+        const waitEnd = new Date(first);
+        waitEnd.setDate(first.getDate() + 5);
+        const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const allergen = ALLERGENS.find(a => a.id === allergenId);
+        return {
+          allergenId,
+          allergenLabel: allergen ? `${allergen.emoji} ${allergen.label}` : allergenId,
+          firstDate: fmt(first),
+          waitUntil: `${fmt(waitStart)}–${fmt(waitEnd)}`,
+        };
+      });
+  }, [entries]);
+
   return {
     entries,
     syncing,
@@ -108,5 +142,6 @@ export function useFoodEntries() {
     getEntriesForMonth,
     getFoodNames,
     isFirstIntroduction,
+    recentNewAllergens,
   };
 }

@@ -101,7 +101,7 @@ export default function FoodEntryCard({ entry, onDelete, onEdit }: FoodEntryCard
               <span className="text-gray-400 dark:text-stone-500 text-xs uppercase font-medium block mb-1">Symptoms observed</span>
               <div className="flex flex-wrap gap-1">
                 {symptomLabels.map(label => (
-                  <span key={label} className="chip bg-red-100 text-red-700">{label}</span>
+                  <span key={label} className="chip bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300">{label}</span>
                 ))}
               </div>
               {entry.reactionDelay && (

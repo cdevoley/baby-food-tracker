@@ -167,7 +167,7 @@ export default function StatsView({ entries, onImport }: StatsViewProps) {
                 <span className="text-sm text-gray-700 dark:text-stone-200 capitalize">
                   <span className="text-gray-400 dark:text-stone-500 mr-1.5">{i + 1}.</span>{name}
                 </span>
-                <span className="chip bg-green-100 text-green-700">{count}× loved</span>
+                <span className="chip bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300">{count}× loved</span>
               </div>
             ))}
           </div>
@@ -184,7 +184,7 @@ export default function StatsView({ entries, onImport }: StatsViewProps) {
                 <span className="text-sm text-gray-700 dark:text-stone-200 capitalize">
                   <span className="text-gray-400 dark:text-stone-500 mr-1.5">{i + 1}.</span>{name}
                 </span>
-                <span className="chip bg-sage-100 text-sage-700">{count}× given</span>
+                <span className="chip bg-sage-100 dark:bg-stone-700 text-sage-700 dark:text-sage-300">{count}× given</span>
               </div>
             ))}
           </div>

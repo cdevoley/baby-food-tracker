@@ -137,7 +137,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry, recentNewAller
               </button>
             ))}
           </div>
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-sage-50 to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-sage-50 dark:from-stone-900 to-transparent" />
         </div>
 
         <div className="flex gap-2 flex-wrap items-center">
@@ -172,7 +172,7 @@ export default function FoodHistoryView({ entries, onDeleteEntry, recentNewAller
           {(search.trim() !== '' || filterCategory !== 'all' || filterReaction !== 'all' || showOnlyFirst) && (
             <button
               onClick={() => { setSearch(''); setFilterCategory('all'); setFilterReaction('all'); setShowOnlyFirst(false); }}
-              className="text-sm px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-all ml-auto"
+              className="text-sm px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all ml-auto"
             >
               Clear all
             </button>

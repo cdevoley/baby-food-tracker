@@ -32,7 +32,7 @@ export default function SettingsModal({ open, onClose, onSave, initialProfile }:
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-stone-700">
           <h2 className="font-bold text-gray-800 dark:text-stone-100">Baby Profile</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-stone-200 text-2xl leading-none">×</button>
         </div>
 
         <div className="p-4 space-y-4">

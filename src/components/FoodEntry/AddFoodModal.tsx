@@ -282,7 +282,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
             <h2 className="font-bold text-gray-800 dark:text-stone-100">{isEditMode ? 'Edit Entry' : 'Log Food'}</h2>
             <p className="text-xs text-gray-400 dark:text-stone-400">{format(new Date(date + 'T00:00:00'), 'MMMM d, yyyy')}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-stone-200 text-2xl leading-none">×</button>
         </div>
 
         {/* Step indicator */}
@@ -294,7 +294,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
             />
           ))}
         </div>
-        <p className="px-4 pt-1 text-xs text-gray-400 font-medium">
+        <p className="px-4 pt-1 text-xs text-gray-400 dark:text-stone-400 font-medium">
           Step {stepIdx + 1} of {STEPS.length} — {STEP_LABELS[step]}
         </p>
 
@@ -303,7 +303,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
           {step === 'food' && (
             <>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">What food did baby try? *</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">What food did baby try? *</label>
                 <div className="relative">
                   <input
                     type="text"
@@ -380,7 +380,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                     )}
                     <button
                       onClick={() => { setPhotoPreviewUrl(null); setPhotoAnalysis(''); setPhotoError(null); }}
-                      className="absolute -top-1.5 -right-1.5 bg-gray-200 hover:bg-gray-300 rounded-full w-5 h-5 flex items-center justify-center text-xs text-gray-600"
+                      className="absolute -top-1.5 -right-1.5 bg-gray-200 dark:bg-stone-600 hover:bg-gray-300 dark:hover:bg-stone-500 rounded-full w-5 h-5 flex items-center justify-center text-xs text-gray-600 dark:text-stone-300"
                       aria-label="Remove photo"
                     >
                       ×
@@ -410,11 +410,11 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                       key={cat.id}
                       onClick={() => { setCategory(cat.id); setAiSuggestedCategory(false); }}
                       className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all text-sm ${
-                        category === cat.id ? 'border-sage-400 bg-sage-50' : 'border-gray-200 hover:border-sage-200'
+                        category === cat.id ? 'border-sage-400 bg-sage-50 dark:bg-sage-900/30' : 'border-gray-200 dark:border-stone-600 hover:border-sage-200'
                       }`}
                     >
                       <span className="text-xl">{cat.emoji}</span>
-                      <span className="text-xs font-medium text-gray-700">{cat.label}</span>
+                      <span className="text-xs font-medium text-gray-700 dark:text-stone-200">{cat.label}</span>
                     </button>
                   ))}
                 </div>
@@ -435,7 +435,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                       className={`chip px-2 py-1 border transition-all ${
                         selectedAllergens.includes(allergen.id)
                           ? 'bg-amber-100 text-amber-700 border-amber-300'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-amber-200'
+                          : 'bg-white dark:bg-stone-700 text-gray-600 dark:text-stone-300 border-gray-200 dark:border-stone-600 hover:border-amber-200'
                       }`}
                     >
                       {allergen.emoji} {allergen.label}
@@ -450,14 +450,14 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
           {step === 'details' && (
             <>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Texture / Preparation</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">Texture / Preparation</label>
                 <div className="grid grid-cols-2 gap-2">
                   {TEXTURES.map(t => (
                     <button
                       key={t.id}
                       onClick={() => setTexture(t.id)}
                       className={`p-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
-                        texture === t.id ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-sage-200'
+                        texture === t.id ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 dark:border-stone-600 text-gray-600 dark:text-stone-300 hover:border-sage-200'
                       }`}
                     >
                       {t.label}
@@ -467,7 +467,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Feeding time</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">Feeding time</label>
                 <input
                   type="time"
                   value={feedingTime}
@@ -480,14 +480,14 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">How much did baby eat?</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">How much did baby eat?</label>
                 <div className="flex flex-col gap-1.5">
                   {AMOUNTS.map(a => (
                     <button
                       key={a.id}
                       onClick={() => setAmountEaten(a.id)}
                       className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 text-sm font-medium transition-all text-left ${
-                        amountEaten === a.id ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-sage-200'
+                        amountEaten === a.id ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 dark:border-stone-600 text-gray-600 dark:text-stone-300 hover:border-sage-200'
                       }`}
                     >
                       <span className="text-lg w-7 text-center">{a.emoji}</span> {a.label}
@@ -497,14 +497,14 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">How much did baby enjoy it?</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">How much did baby enjoy it?</label>
                 <div className="flex flex-col gap-1.5">
                   {ENJOYMENT_LEVELS.map(e => (
                     <button
                       key={e.id}
                       onClick={() => setEnjoyment(e.id)}
                       className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 text-sm font-medium transition-all text-left ${
-                        enjoyment === e.id ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600 hover:border-sage-200'
+                        enjoyment === e.id ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 dark:border-stone-600 text-gray-600 dark:text-stone-300 hover:border-sage-200'
                       }`}
                     >
                       <span className="text-xl w-7 text-center">{e.emoji}</span> {e.label}
@@ -519,12 +519,12 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
           {step === 'reaction' && (
             <>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Did baby have any reaction?</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">Did baby have any reaction?</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setHadReaction(false)}
                     className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                      !hadReaction ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 text-gray-600'
+                      !hadReaction ? 'border-sage-400 bg-sage-50 text-sage-700' : 'border-gray-200 dark:border-stone-600 text-gray-600 dark:text-stone-300'
                     }`}
                   >
                     ✅ No reaction
@@ -532,7 +532,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                   <button
                     onClick={() => setHadReaction(true)}
                     className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                      hadReaction ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-600'
+                      hadReaction ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-200 dark:border-stone-600 text-gray-600 dark:text-stone-300'
                     }`}
                   >
                     ⚠️ Had reaction
@@ -543,7 +543,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
               {hadReaction && (
                 <>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Symptoms observed</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">Symptoms observed</label>
                     <div className="flex flex-wrap gap-1.5">
                       {SYMPTOMS.map(symptom => (
                         <button
@@ -552,7 +552,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                           className={`chip px-2 py-1 border transition-all ${
                             selectedSymptoms.includes(symptom.id)
                               ? 'bg-red-100 text-red-700 border-red-300'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-red-200'
+                              : 'bg-white dark:bg-stone-700 text-gray-600 dark:text-stone-300 border-gray-200 dark:border-stone-600 hover:border-red-200'
                           }`}
                         >
                           {symptom.emoji} {symptom.label}
@@ -562,7 +562,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">When did it appear?</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">When did it appear?</label>
                     <div className="flex flex-col gap-1.5">
                       {[
                         { id: 'immediate' as ReactionDelay, label: 'Immediately (within minutes)' },
@@ -573,7 +573,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                           key={opt.id}
                           onClick={() => setReactionDelay(opt.id)}
                           className={`p-2.5 rounded-xl border-2 text-sm font-medium text-left transition-all ${
-                            reactionDelay === opt.id ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-600'
+                            reactionDelay === opt.id ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-200 dark:border-stone-600 text-gray-600 dark:text-stone-300'
                           }`}
                         >
                           {opt.label}
@@ -582,7 +582,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                     </div>
                   </div>
 
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
+                  <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-xl p-3 text-xs text-amber-700 dark:text-amber-200">
                     <strong>Reminder:</strong> If your baby is having a severe reaction (difficulty breathing, severe swelling, loss of consciousness), call emergency services immediately.
                   </div>
                 </>
@@ -594,7 +594,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
           {step === 'notes' && (
             <>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">
                   Notes <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <textarea
@@ -609,22 +609,22 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
               {/* Summary */}
               <div className="bg-sage-50 dark:bg-stone-700 rounded-xl p-3 space-y-1 text-sm">
                 <p className="font-semibold text-sage-700 dark:text-sage-400 mb-2">Summary</p>
-                <p><span className="text-gray-500">Food:</span> <span className="font-medium capitalize">{foodName}</span> {isFirstTry && '⭐'}</p>
+                <p><span className="text-gray-500 dark:text-stone-400">Food:</span> <span className="font-medium capitalize">{foodName}</span> {isFirstTry && '⭐'}</p>
                 <p>
-                  <span className="text-gray-500">Time:</span>{' '}
+                  <span className="text-gray-500 dark:text-stone-400">Time:</span>{' '}
                   <span className="font-medium">{feedingTime} · {timeLabel?.emoji} {timeLabel?.label}</span>
                 </p>
-                <p><span className="text-gray-500">Enjoyment:</span> {ENJOYMENT_LEVELS.find(e => e.id === enjoyment)?.emoji} {ENJOYMENT_LEVELS.find(e => e.id === enjoyment)?.label}</p>
-                <p><span className="text-gray-500">Amount:</span> {AMOUNTS.find(a => a.id === amountEaten)?.label}</p>
+                <p><span className="text-gray-500 dark:text-stone-400">Enjoyment:</span> {ENJOYMENT_LEVELS.find(e => e.id === enjoyment)?.emoji} {ENJOYMENT_LEVELS.find(e => e.id === enjoyment)?.label}</p>
+                <p><span className="text-gray-500 dark:text-stone-400">Amount:</span> {AMOUNTS.find(a => a.id === amountEaten)?.label}</p>
                 {selectedAllergens.length > 0 && (
-                  <p><span className="text-gray-500">Allergens:</span> {selectedAllergens.map(id => ALLERGENS.find(a => a.id === id)?.label).join(', ')}</p>
+                  <p><span className="text-gray-500 dark:text-stone-400">Allergens:</span> {selectedAllergens.map(id => ALLERGENS.find(a => a.id === id)?.label).join(', ')}</p>
                 )}
                 {hadReaction && <p className="text-amber-600">⚠️ Reaction logged</p>}
 
                 {/* Nutrition grid */}
                 {nutrition && (
-                  <div className="mt-2 pt-2 border-t border-sage-200">
-                    <p className="text-xs text-gray-400 uppercase font-medium mb-1.5">Nutrition (per 100g) · ✨ AI estimate</p>
+                  <div className="mt-2 pt-2 border-t border-sage-200 dark:border-stone-600">
+                    <p className="text-xs text-gray-400 dark:text-stone-400 uppercase font-medium mb-1.5">Nutrition (per 100g) · ✨ AI estimate</p>
                     <div className="grid grid-cols-5 gap-1 text-center">
                       {[
                         { label: 'Cal', value: nutrition.calories },
@@ -633,9 +633,9 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
                         { label: 'Fat', value: `${nutrition.fat_g}g` },
                         { label: 'Fiber', value: `${nutrition.fiber_g}g` },
                       ].map(item => (
-                        <div key={item.label} className="bg-white rounded-lg p-1.5">
-                          <p className="text-xs font-semibold text-sage-700">{item.value}</p>
-                          <p className="text-xs text-gray-400">{item.label}</p>
+                        <div key={item.label} className="bg-white dark:bg-stone-600 rounded-lg p-1.5">
+                          <p className="text-xs font-semibold text-sage-700 dark:text-sage-400">{item.value}</p>
+                          <p className="text-xs text-gray-400 dark:text-stone-400">{item.label}</p>
                         </div>
                       ))}
                     </div>

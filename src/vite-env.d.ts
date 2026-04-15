@@ -2,6 +2,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_ANTHROPIC_API_KEY: string | undefined;
+  readonly VITE_SUPABASE_URL: string | undefined;
+  readonly VITE_SUPABASE_ANON_KEY: string | undefined;
 }
 
 interface ImportMeta {

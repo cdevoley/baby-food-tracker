@@ -141,3 +141,13 @@ export async function dbDeleteEntry(id: string): Promise<void> {
   const { error } = await supabase.from('food_entries').delete().eq('id', id);
   if (error) throw error;
 }
+
+export async function dbUpsertEntries(entries: FoodEntry[]): Promise<number> {
+  if (!supabase || entries.length === 0) return 0;
+  const rows = entries.map(entryToRow);
+  const { error, count } = await supabase
+    .from('food_entries')
+    .upsert(rows, { onConflict: 'id', count: 'exact' });
+  if (error) throw error;
+  return count ?? rows.length;
+}

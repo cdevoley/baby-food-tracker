@@ -52,10 +52,11 @@ export default function SignInView({ onSignIn }: SignInViewProps) {
         ) : (
           <form onSubmit={handleSubmit} className="card space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">
+              <label htmlFor="sign-in-email" className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">
                 Email address
               </label>
               <input
+                id="sign-in-email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}

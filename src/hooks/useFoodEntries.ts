@@ -14,20 +14,22 @@ import {
 
 interface UseFoodEntriesOptions {
   onSyncError?: (message: string) => void;
+  householdId?: string | null;
 }
 
 export function useFoodEntries(options: UseFoodEntriesOptions = {}) {
-  const { onSyncError } = options;
+  const { onSyncError, householdId } = options;
   // When Supabase is enabled, start with an empty list and load from DB.
   // Otherwise, hydrate immediately from localStorage.
   const [entries, setEntries] = useState<FoodEntry[]>(() =>
     SUPABASE_ENABLED ? [] : loadEntries()
   );
-  const [syncing, setSyncing] = useState(SUPABASE_ENABLED);
+  const [syncing, setSyncing] = useState(false);
 
-  // On mount: load from Supabase (when enabled), fall back to localStorage on error.
+  // On mount (or when householdId changes): load from Supabase (when enabled and householdId is set), fall back to localStorage on error.
   useEffect(() => {
-    if (!SUPABASE_ENABLED) return;
+    if (!SUPABASE_ENABLED || !householdId) return;
+    setSyncing(true);
     dbLoadEntries()
       .then((data) => {
         setEntries(data);
@@ -38,7 +40,7 @@ export function useFoodEntries(options: UseFoodEntriesOptions = {}) {
         setEntries(loadEntries());
       })
       .finally(() => setSyncing(false));
-  }, []);
+  }, [householdId]);
 
   const addEntry = useCallback((entry: Omit<FoodEntry, 'id' | 'createdAt'>) => {
     const newEntry: FoodEntry = {
@@ -51,14 +53,14 @@ export function useFoodEntries(options: UseFoodEntriesOptions = {}) {
       saveEntries(updated);
       return updated;
     });
-    if (SUPABASE_ENABLED) {
-      dbInsertEntry(newEntry).catch(err => {
+    if (SUPABASE_ENABLED && householdId) {
+      dbInsertEntry(newEntry, householdId).catch(err => {
         console.error('Supabase insert failed:', err);
         onSyncError?.('Failed to save to cloud — saved locally');
       });
     }
     return newEntry;
-  }, [onSyncError]);
+  }, [householdId, onSyncError]);
 
   const updateEntry = useCallback((id: string, updates: Partial<FoodEntry>) => {
     setEntries(prev => {
@@ -149,13 +151,13 @@ export function useFoodEntries(options: UseFoodEntriesOptions = {}) {
       saveEntries(merged);
       return merged;
     });
-    if (SUPABASE_ENABLED) {
-      dbUpsertEntries(imported).catch(err => {
+    if (SUPABASE_ENABLED && householdId) {
+      dbUpsertEntries(imported, householdId).catch(err => {
         console.error('Supabase import sync failed:', err);
         onSyncError?.('Imported locally but cloud sync failed');
       });
     }
-  }, [onSyncError]);
+  }, [householdId, onSyncError]);
 
   return {
     entries,

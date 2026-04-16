@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import {
   SUPABASE_ENABLED,
@@ -24,8 +24,11 @@ export function useAuth() {
     householdId: null,
     authReady: !SUPABASE_ENABLED,
   });
+  const isResolvingRef = useRef(false);
 
   const resolveHousehold = useCallback(async (user: User) => {
+    if (isResolvingRef.current) return;
+    isResolvingRef.current = true;
     try {
       const existing = await dbGetHousehold();
       if (existing) {
@@ -37,6 +40,8 @@ export function useAuth() {
     } catch (err) {
       console.error('Failed to resolve household:', err);
       setState(prev => ({ ...prev, authReady: true }));
+    } finally {
+      isResolvingRef.current = false;
     }
   }, []);
 

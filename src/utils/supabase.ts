@@ -197,7 +197,10 @@ export async function dbGetHousehold(): Promise<{ id: string } | null> {
     .select('household_id')
     .limit(1)
     .single();
-  if (error) return null;
+  if (error) {
+    if (error.code === 'PGRST116') return null; // no rows — genuinely first login
+    throw error; // real error — surface to caller
+  }
   return { id: (data as { household_id: string }).household_id };
 }
 
@@ -213,6 +216,10 @@ export async function dbCreateHousehold(userId: string): Promise<string> {
   const { error: mErr } = await supabase
     .from('household_members')
     .insert({ household_id: householdId, user_id: userId, role: 'owner' });
-  if (mErr) throw mErr;
+  if (mErr) {
+    // best-effort cleanup to avoid an orphaned household row
+    await supabase.from('households').delete().eq('id', householdId);
+    throw mErr;
+  }
   return householdId;
 }

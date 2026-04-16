@@ -7,6 +7,7 @@ interface HeaderProps {
   themePref: ThemePreference;
   onToggleTheme: () => void;
   onOpenSettings?: () => void;
+  cloudEnabled?: boolean;
 }
 
 const VIEW_TITLES: Record<View, string> = {
@@ -15,7 +16,7 @@ const VIEW_TITLES: Record<View, string> = {
   stats: 'Stats & Insights',
 };
 
-export default function Header({ view, babyName, themePref, onToggleTheme, onOpenSettings }: HeaderProps) {
+export default function Header({ view, babyName, themePref, onToggleTheme, onOpenSettings, cloudEnabled }: HeaderProps) {
   const themeIcon = themePref === 'dark' ? '☀️' : '🌙';
 
   return (
@@ -28,6 +29,14 @@ export default function Header({ view, babyName, themePref, onToggleTheme, onOpe
           )}
         </div>
         <div className="flex items-center gap-1">
+          {cloudEnabled && (
+            <span
+              title="Cloud sync active"
+              className="p-2 text-sage-400 dark:text-sage-500 text-lg leading-none"
+            >
+              ☁️
+            </span>
+          )}
           <button
             onClick={onToggleTheme}
             aria-label="Toggle dark mode"

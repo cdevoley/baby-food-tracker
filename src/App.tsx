@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { View } from './types';
 import { useFoodEntries } from './hooks/useFoodEntries';
-import { saveEntries } from './utils/storage';
+import { SUPABASE_ENABLED } from './utils/supabase';
 import { loadThemePreference, saveThemePreference, applyTheme } from './utils/theme';
 import type { ThemePreference } from './utils/theme';
 import { loadProfile, saveProfile } from './utils/profile';
@@ -39,20 +39,22 @@ export default function App() {
     setThemePref(next);
     saveThemePreference(next);
   }, [themePref]);
-  const {
-    entries,
-    addEntry,
-    updateEntry,
-    deleteEntry,
-    isFirstIntroduction,
-    recentNewAllergens,
-  } = useFoodEntries();
-  const [editingEntry, setEditingEntry] = useState<FoodEntry | null>(null);
-
   const showToast = useCallback((msg: string) => {
     setToast({ message: msg, visible: true });
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 2500);
   }, []);
+
+  const {
+    entries,
+    syncing,
+    addEntry,
+    updateEntry,
+    deleteEntry,
+    importEntries,
+    isFirstIntroduction,
+    recentNewAllergens,
+  } = useFoodEntries({ onSyncError: showToast });
+  const [editingEntry, setEditingEntry] = useState<FoodEntry | null>(null);
 
   const handleAddEntry = useCallback((entry: Parameters<typeof addEntry>[0]) => {
     addEntry(entry);
@@ -65,11 +67,9 @@ export default function App() {
   }, [deleteEntry, showToast]);
 
   const handleImport = useCallback((imported: FoodEntry[]) => {
-    const merged = [...entries, ...imported.filter(e => !entries.find(p => p.id === e.id))];
-    saveEntries(merged);
-    // Reload to pick up the saved entries (avoids prop-drilling a setEntries)
-    window.location.reload();
-  }, [entries]);
+    importEntries(imported);
+    showToast(`Imported ${imported.length} entries`);
+  }, [importEntries, showToast]);
 
   return (
     <div className="min-h-screen flex flex-col bg-sage-50 dark:bg-stone-900">
@@ -79,29 +79,39 @@ export default function App() {
         themePref={themePref}
         onToggleTheme={toggleTheme}
         onOpenSettings={() => setShowSettings(true)}
+        cloudEnabled={SUPABASE_ENABLED}
       />
 
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-lg mx-auto px-4 py-4">
-          {view === 'calendar' && (
-            <CalendarView
-              entries={entries}
-              onAddEntry={handleAddEntry}
-              onDeleteEntry={handleDeleteEntry}
-              isFirstIntroduction={isFirstIntroduction}
-              onEditEntry={setEditingEntry}
-            />
-          )}
-          {view === 'history' && (
-            <FoodHistoryView
-              entries={entries}
-              onDeleteEntry={handleDeleteEntry}
-              recentNewAllergens={recentNewAllergens}
-              onEditEntry={setEditingEntry}
-            />
-          )}
-          {view === 'stats' && (
-            <StatsView entries={entries} onImport={handleImport} />
+          {syncing ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-8 h-8 border-3 border-sage-200 border-t-sage-500 rounded-full animate-spin mb-3" />
+              <p className="text-sm text-gray-400 dark:text-stone-500">Loading your data...</p>
+            </div>
+          ) : (
+            <>
+              {view === 'calendar' && (
+                <CalendarView
+                  entries={entries}
+                  onAddEntry={handleAddEntry}
+                  onDeleteEntry={handleDeleteEntry}
+                  isFirstIntroduction={isFirstIntroduction}
+                  onEditEntry={setEditingEntry}
+                />
+              )}
+              {view === 'history' && (
+                <FoodHistoryView
+                  entries={entries}
+                  onDeleteEntry={handleDeleteEntry}
+                  recentNewAllergens={recentNewAllergens}
+                  onEditEntry={setEditingEntry}
+                />
+              )}
+              {view === 'stats' && (
+                <StatsView entries={entries} onImport={handleImport} />
+              )}
+            </>
           )}
         </div>
       </main>

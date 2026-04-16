@@ -9,9 +9,15 @@ import {
   dbInsertEntry,
   dbUpdateEntry,
   dbDeleteEntry,
+  dbUpsertEntries,
 } from '../utils/supabase';
 
-export function useFoodEntries() {
+interface UseFoodEntriesOptions {
+  onSyncError?: (message: string) => void;
+}
+
+export function useFoodEntries(options: UseFoodEntriesOptions = {}) {
+  const { onSyncError } = options;
   // When Supabase is enabled, start with an empty list and load from DB.
   // Otherwise, hydrate immediately from localStorage.
   const [entries, setEntries] = useState<FoodEntry[]>(() =>
@@ -46,12 +52,13 @@ export function useFoodEntries() {
       return updated;
     });
     if (SUPABASE_ENABLED) {
-      dbInsertEntry(newEntry).catch(err =>
-        console.error('Supabase insert failed:', err)
-      );
+      dbInsertEntry(newEntry).catch(err => {
+        console.error('Supabase insert failed:', err);
+        onSyncError?.('Failed to save to cloud — saved locally');
+      });
     }
     return newEntry;
-  }, []);
+  }, [onSyncError]);
 
   const updateEntry = useCallback((id: string, updates: Partial<FoodEntry>) => {
     setEntries(prev => {
@@ -60,11 +67,12 @@ export function useFoodEntries() {
       return updated;
     });
     if (SUPABASE_ENABLED) {
-      dbUpdateEntry(id, updates).catch(err =>
-        console.error('Supabase update failed:', err)
-      );
+      dbUpdateEntry(id, updates).catch(err => {
+        console.error('Supabase update failed:', err);
+        onSyncError?.('Failed to sync update to cloud — saved locally');
+      });
     }
-  }, []);
+  }, [onSyncError]);
 
   const deleteEntry = useCallback((id: string) => {
     setEntries(prev => {
@@ -73,11 +81,12 @@ export function useFoodEntries() {
       return updated;
     });
     if (SUPABASE_ENABLED) {
-      dbDeleteEntry(id).catch(err =>
-        console.error('Supabase delete failed:', err)
-      );
+      dbDeleteEntry(id).catch(err => {
+        console.error('Supabase delete failed:', err);
+        onSyncError?.('Failed to sync delete to cloud — removed locally');
+      });
     }
-  }, []);
+  }, [onSyncError]);
 
   const getEntriesForDate = useCallback((date: string) => {
     return entries.filter(e => e.date === date);
@@ -132,12 +141,29 @@ export function useFoodEntries() {
       });
   }, [entries]);
 
+  const importEntries = useCallback((imported: FoodEntry[]) => {
+    setEntries(prev => {
+      const existingIds = new Set(prev.map(e => e.id));
+      const newEntries = imported.filter(e => !existingIds.has(e.id));
+      const merged = [...prev, ...newEntries];
+      saveEntries(merged);
+      return merged;
+    });
+    if (SUPABASE_ENABLED) {
+      dbUpsertEntries(imported).catch(err => {
+        console.error('Supabase import sync failed:', err);
+        onSyncError?.('Imported locally but cloud sync failed');
+      });
+    }
+  }, [onSyncError]);
+
   return {
     entries,
     syncing,
     addEntry,
     updateEntry,
     deleteEntry,
+    importEntries,
     getEntriesForDate,
     getEntriesForMonth,
     getFoodNames,

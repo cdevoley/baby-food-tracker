@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import type { FoodEntry } from '../../types';
 import { FOOD_CATEGORIES, ENJOYMENT_LEVELS, ALLERGENS } from '../../utils/constants';
-import { exportData, importData } from '../../utils/storage';
+import { importData } from '../../utils/storage';
 import { SUPABASE_ENABLED, dbUpsertEntries } from '../../utils/supabase';
 
 interface StatsViewProps {
@@ -12,6 +12,16 @@ interface StatsViewProps {
 export default function StatsView({ entries, onImport }: StatsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState('');
+
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `baby-food-tracker-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const [syncStatus, setSyncStatus] = useState('');
   const [syncing, setSyncing] = useState(false);
   const stats = useMemo(() => {
@@ -64,7 +74,7 @@ export default function StatsView({ entries, onImport }: StatsViewProps) {
         <div className="card">
           <h3 className="font-semibold text-gray-700 dark:text-stone-200 mb-3">Data</h3>
           <div className="flex gap-2">
-            <button onClick={() => exportData()} className="btn-secondary flex-1 text-sm">Export JSON</button>
+            <button onClick={() => handleExport()} className="btn-secondary flex-1 text-sm">Export JSON</button>
             <button onClick={() => fileInputRef.current?.click()} className="btn-secondary flex-1 text-sm">Import JSON</button>
           </div>
           <input
@@ -213,7 +223,7 @@ export default function StatsView({ entries, onImport }: StatsViewProps) {
         <h3 className="font-semibold text-gray-700 dark:text-stone-200 mb-3">Data</h3>
         <div className="flex gap-2">
           <button
-            onClick={() => exportData()}
+            onClick={() => handleExport()}
             className="btn-secondary flex-1 text-sm"
           >
             Export JSON

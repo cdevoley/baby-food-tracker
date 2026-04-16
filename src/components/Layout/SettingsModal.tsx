@@ -6,9 +6,11 @@ interface SettingsModalProps {
   onClose: () => void;
   onSave: (profile: BabyProfile) => void;
   initialProfile: BabyProfile;
+  userEmail?: string;
+  onSignOut?: () => void;
 }
 
-export default function SettingsModal({ open, onClose, onSave, initialProfile }: SettingsModalProps) {
+export default function SettingsModal({ open, onClose, onSave, initialProfile, userEmail, onSignOut }: SettingsModalProps) {
   const [name, setName] = useState(initialProfile.babyName);
   const [dob, setDob] = useState(initialProfile.dob ?? '');
   const [startDate, setStartDate] = useState(initialProfile.startDate ?? '');
@@ -72,6 +74,21 @@ export default function SettingsModal({ open, onClose, onSave, initialProfile }:
               className="w-full border border-gray-200 dark:border-stone-600 rounded-xl px-3 py-2.5 text-gray-800 dark:text-stone-100 bg-white dark:bg-stone-700 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100"
             />
           </div>
+
+          {userEmail && onSignOut && (
+            <div className="border-t border-gray-100 dark:border-stone-700 pt-4">
+              <p className="text-xs font-semibold text-gray-500 dark:text-stone-400 uppercase tracking-wide mb-2">Account</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-700 dark:text-stone-200 truncate mr-3">{userEmail}</p>
+                <button
+                  onClick={() => { onSignOut(); onClose(); }}
+                  className="text-sm text-red-500 hover:text-red-600 dark:text-red-400 whitespace-nowrap flex-shrink-0"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 p-4 border-t border-gray-100 dark:border-stone-700">

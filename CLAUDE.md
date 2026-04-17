@@ -90,13 +90,13 @@ All lookup data (allergens, symptoms, categories, etc.) lives in `src/utils/cons
 
 **Goal:** Replace localStorage with Supabase so data persists across devices; add auth + household sharing + realtime for multi-person family use.
 
-**Shipped:**
-- [x] **Chunk 1** (commit `e23268b`) — Supabase data layer: `food_entries` table, typed CRUD helpers in `src/utils/supabase.ts`, `useFoodEntries` loads from Supabase with optimistic writes, "Sync to Cloud" bulk migration button in StatsView. Currently running on permissive `anon_all` RLS policy.
+**Shipped (live at baby-food-tracker-lemon.vercel.app):**
+- [x] **Chunk 1** (commit `e23268b`) — Supabase data layer: `food_entries` table, typed CRUD helpers in `src/utils/supabase.ts`, `useFoodEntries` loads from Supabase with optimistic writes, "Sync to Cloud" bulk migration button in StatsView.
 - [x] **Chunk 2** (commit `910c2b2`) — Sync UX polish: loading spinner on mount, error toasts via `onSyncError` callback, `importEntries()` replaces the `window.location.reload()` hack, cloud icon (☁️) in Header, Export pulls from in-memory `entries` prop.
+- [x] **Chunk 3** (commits `06ad324` → `420896a`) — Magic-link auth via `useAuth` + `SignInView`; `households` + `household_members` tables with RLS gated on membership; `household_id` on `food_entries`; three-branch rendering (loading / sign-in / app) in `App.tsx`; account section + sign-out in `SettingsModal`; `anon_all` policy dropped. Post-ship RLS fixes in `420896a` and `33896b1` resolve a circular policy dep and an infinite-recursion bug.
 
 **Planned (design approved — see [`docs/superpowers/specs/2026-04-16-phase3-chunks-3-and-4-design.md`](docs/superpowers/specs/2026-04-16-phase3-chunks-3-and-4-design.md)):**
-- [ ] **Chunk 3 — Auth Foundation:** Magic-link auth via Supabase Auth; new `households` + `household_members` tables; `household_id` added to `food_entries`; RLS locked down to household membership; one-time SQL attaches existing rows to owner's household. `SignInView` + sign-out in Settings. End of chunk 3: app works for owner alone with real auth; `anon_all` policy gone.
-- [ ] **Chunk 4 — Collaboration:** Email invites (owner types invitee email → Edge Function generates 6-char code + emails it via Resend → invitee signs in via magic link → `JoinHouseholdView` redeems code via `redeem_invite(code)` security-definer postgres function). Supabase Realtime subscriptions on `food_entries` for live sync between household members. Members / Invites / Leave-household UI in Settings.
+- [ ] **Chunk 4 — Collaboration:** Email invites (owner types invitee email → Edge Function generates 6-char code + emails it via Resend → invitee signs in via magic link → `JoinHouseholdView` redeems code via `redeem_invite(code)` security-definer postgres function). Supabase Realtime subscriptions on `food_entries` for live sync between household members. Members / Invites / Leave-household UI in Settings. Must also add a SECURITY DEFINER function so household-mates can see each other's `household_members` rows (chunk 3 simplified that policy to avoid RLS recursion).
 
 **Setup (user, before chunk 4):**
 - Resend account + `RESEND_API_KEY` Edge Function secret (`supabase secrets set RESEND_API_KEY=...`)

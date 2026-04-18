@@ -51,5 +51,8 @@ Supabase client and typed query helpers. Active only when `VITE_SUPABASE_URL` + 
 | `dbInsertEntry(entry)` | Insert a full `FoodEntry` (camelCase → snake_case) |
 | `dbUpdateEntry(id, updates)` | Partial update by id |
 | `dbDeleteEntry(id)` | Delete by id |
+| `signInWithGoogle()` | Starts Supabase OAuth redirect to Google; returns user to `window.location.origin` |
+| `signOutFromSupabase()` | Ends current session |
+| `getSession()` / `onAuthStateChange(cb)` | Session readers used by `useAuth` |
 
 The `DbRow` interface (internal) mirrors `FoodEntry` in snake_case and must stay in sync with the `food_entries` Supabase table schema and `src/types/index.ts`.

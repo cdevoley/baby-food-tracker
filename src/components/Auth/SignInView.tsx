@@ -1,27 +1,21 @@
 import { useState } from 'react';
 
 interface SignInViewProps {
-  onSignIn: (email: string) => Promise<void>;
+  onSignInWithGoogle: () => Promise<void>;
 }
 
-type SignInState = 'idle' | 'sending' | 'sent';
-
-export default function SignInView({ onSignIn }: SignInViewProps) {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<SignInState>('idle');
+export default function SignInView({ onSignInWithGoogle }: SignInViewProps) {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setStatus('sending');
+  const handleGoogle = async () => {
+    setLoading(true);
     setError('');
     try {
-      await onSignIn(email.trim().toLowerCase());
-      setStatus('sent');
+      await onSignInWithGoogle();
     } catch {
-      setStatus('idle');
-      setError('Failed to send — check your email address and try again.');
+      setLoading(false);
+      setError('Failed to start Google sign-in. Please try again.');
     }
   };
 
@@ -31,51 +25,29 @@ export default function SignInView({ onSignIn }: SignInViewProps) {
         <div className="text-center mb-8">
           <p className="text-5xl mb-3">🍼</p>
           <h1 className="text-2xl font-bold text-sage-700 dark:text-sage-400">Baby Food Tracker</h1>
-          <p className="text-sm text-gray-500 dark:text-stone-400 mt-1">Sign in to access your data</p>
+          <p className="text-sm text-gray-500 dark:text-stone-400 mt-1">Sign in to continue</p>
         </div>
 
-        {status === 'sent' ? (
-          <div className="card text-center py-8">
-            <p className="text-3xl mb-3">📬</p>
-            <p className="font-semibold text-gray-800 dark:text-stone-100">Check your email</p>
-            <p className="text-sm text-gray-500 dark:text-stone-400 mt-2">
-              We sent a magic link to <span className="font-medium text-gray-700 dark:text-stone-200">{email}</span>.
-              Click the link to sign in.
-            </p>
-            <button
-              onClick={() => { setStatus('idle'); setEmail(''); }}
-              className="text-xs text-sage-600 dark:text-sage-400 mt-4 underline"
-            >
-              Use a different email
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="card space-y-4">
-            <div>
-              <label htmlFor="sign-in-email" className="block text-sm font-semibold text-gray-700 dark:text-stone-200 mb-1.5">
-                Email address
-              </label>
-              <input
-                id="sign-in-email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoFocus
-                required
-                className="w-full border border-gray-200 dark:border-stone-600 rounded-xl px-3 py-2.5 text-gray-800 dark:text-stone-100 bg-white dark:bg-stone-700 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100"
-              />
-            </div>
-            {error && <p className="text-xs text-red-500">{error}</p>}
-            <button
-              type="submit"
-              disabled={status === 'sending' || !email.trim()}
-              className="btn-primary w-full disabled:opacity-50"
-            >
-              {status === 'sending' ? 'Sending…' : 'Send magic link'}
-            </button>
-          </form>
-        )}
+        <div className="card space-y-4">
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 border border-gray-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-gray-800 dark:text-stone-100 rounded-xl px-4 py-2.5 font-semibold hover:bg-gray-50 dark:hover:bg-stone-600 disabled:opacity-50 transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+              <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+            </svg>
+            {loading ? 'Opening Google…' : 'Continue with Google'}
+          </button>
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <p className="text-xs text-center text-gray-500 dark:text-stone-400">
+            We use Google to keep your family's data secure.
+          </p>
+        </div>
       </div>
     </div>
   );

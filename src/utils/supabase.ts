@@ -166,9 +166,12 @@ export async function getSession(): Promise<Session | null> {
   return session;
 }
 
-export async function signInWithOtp(email: string): Promise<void> {
+export async function signInWithGoogle(): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.auth.signInWithOtp({ email });
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  });
   if (error) throw error;
 }
 

@@ -46,7 +46,7 @@ export default function App() {
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 2500);
   }, []);
 
-  const { session, user, householdId, authReady, signIn, signOut } = useAuth();
+  const { session, user, householdId, authReady, signInWithGoogle, signOut } = useAuth();
 
   const {
     entries,
@@ -89,7 +89,7 @@ export default function App() {
         </div>
       )}
       {SUPABASE_ENABLED && authReady && !session && (
-        <SignInView onSignIn={signIn} />
+        <SignInView onSignInWithGoogle={signInWithGoogle} />
       )}
       {(!SUPABASE_ENABLED || (authReady && !!session)) && (
         <div className="min-h-screen flex flex-col bg-sage-50 dark:bg-stone-900">

@@ -3,7 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import {
   SUPABASE_ENABLED,
   getSession,
-  signInWithOtp,
+  signInWithGoogle as signInWithGoogleHelper,
   signOutFromSupabase,
   onAuthStateChange,
   dbGetHousehold,
@@ -73,13 +73,13 @@ export function useAuth() {
     });
   }, [resolveHousehold]);
 
-  const signIn = useCallback(async (email: string) => {
-    await signInWithOtp(email);
+  const signInWithGoogle = useCallback(async () => {
+    await signInWithGoogleHelper();
   }, []);
 
   const signOut = useCallback(async () => {
     await signOutFromSupabase();
   }, []);
 
-  return { ...state, signIn, signOut };
+  return { ...state, signInWithGoogle, signOut };
 }

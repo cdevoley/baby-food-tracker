@@ -94,9 +94,18 @@ All lookup data (allergens, symptoms, categories, etc.) lives in `src/utils/cons
 - [x] **Chunk 1** (commit `e23268b`) — Supabase data layer: `food_entries` table, typed CRUD helpers in `src/utils/supabase.ts`, `useFoodEntries` loads from Supabase with optimistic writes, "Sync to Cloud" bulk migration button in StatsView.
 - [x] **Chunk 2** (commit `910c2b2`) — Sync UX polish: loading spinner on mount, error toasts via `onSyncError` callback, `importEntries()` replaces the `window.location.reload()` hack, cloud icon (☁️) in Header, Export pulls from in-memory `entries` prop.
 - [x] **Chunk 3** (commits `06ad324` → `420896a`) — Magic-link auth via `useAuth` + `SignInView`; `households` + `household_members` tables with RLS gated on membership; `household_id` on `food_entries`; three-branch rendering (loading / sign-in / app) in `App.tsx`; account section + sign-out in `SettingsModal`; `anon_all` policy dropped. Post-ship RLS fixes in `420896a` and `33896b1` resolve a circular policy dep and an infinite-recursion bug.
+- [x] **Mobile redirect fix** (commit `8c18978`, branch `claude/debug-mobile-loading-3QhGL`) — `signInWithOtp` now passes `emailRedirectTo: window.location.origin` so the magic link returns to the origin the user signed in from (Vercel on mobile, localhost in dev) instead of the Supabase dashboard's Site URL. **Requires** the production URL + `http://localhost:5173/**` to be in the Supabase dashboard's Auth → URL Configuration → Redirect URLs allowlist, and Site URL set to the Vercel URL.
 
 **Planned (design approved — see [`docs/superpowers/specs/2026-04-16-phase3-chunks-3-and-4-design.md`](docs/superpowers/specs/2026-04-16-phase3-chunks-3-and-4-design.md)):**
 - [ ] **Chunk 4 — Collaboration:** Email invites (owner types invitee email → Edge Function generates 6-char code + emails it via Resend → invitee signs in via magic link → `JoinHouseholdView` redeems code via `redeem_invite(code)` security-definer postgres function). Supabase Realtime subscriptions on `food_entries` for live sync between household members. Members / Invites / Leave-household UI in Settings. Must also add a SECURITY DEFINER function so household-mates can see each other's `household_members` rows (chunk 3 simplified that policy to avoid RLS recursion).
+
+**Paused — alternative auth for testing (blocked on user decision):**
+Supabase's default email rate limit (~4/hour on free tier) is blocking mobile testing. Options discussed:
+1. **Password auth** (`signInWithPassword` + sign-up form) — smallest code change, no external setup, no rate limit. Adds a sign-up flow.
+2. **Google OAuth** (`signInWithOAuth({ provider: 'google' })`) — one-tap on mobile, no passwords. Requires Google OAuth credentials configured in Supabase dashboard.
+3. **Raise rate limit / custom SMTP** — dashboard Auth → Rate Limits, or swap to Resend (already planned for chunk 4 invites).
+
+Recommendation when resuming: add password auth **alongside** magic link (keep both) so magic link still works for real users while testing has an unthrottled path. No code written yet.
 
 **Setup (user, before chunk 4):**
 - Resend account + `RESEND_API_KEY` Edge Function secret (`supabase secrets set RESEND_API_KEY=...`)

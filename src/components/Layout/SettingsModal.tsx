@@ -266,11 +266,7 @@ export default function SettingsModal({
 
         <div className="flex gap-2 p-4 border-t border-gray-100 dark:border-stone-700 sticky bottom-0 bg-white dark:bg-stone-800">
           <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-          <button
-            onClick={handleSave}
-            disabled={name.trim() === ''}
-            className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <button onClick={handleSave} className="btn-primary flex-1">
             Save
           </button>
         </div>

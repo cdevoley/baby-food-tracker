@@ -153,7 +153,10 @@ export function useFoodEntries(options: UseFoodEntriesOptions = {}) {
   }, [entries]);
 
   const recentNewAllergens = useMemo(() => {
+    // Normalize to midnight so entry dates (parsed at 00:00) compare correctly
+    // against the cutoff — otherwise reminders disappear up to 24h early.
     const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
     cutoff.setDate(cutoff.getDate() - 5);
 
     // Build map: allergen ID → earliest entry date

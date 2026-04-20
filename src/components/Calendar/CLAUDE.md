@@ -10,7 +10,7 @@ Top-level calendar page. Manages:
 - `selectedDate` — clicking a day opens a slide-up detail panel below the grid showing that day's entries (`FoodEntryCard` list)
 - `showAddModal` — opens `AddFoodModal` pre-filled with the tapped date
 
-Props: `entries`, `onAddEntry`, `onDeleteEntry`, `isFirstIntroduction`
+Props: `entries`, `onAddEntry`, `onDeleteEntry`, `isFirstIntroduction`, `onEditEntry`
 
 ### `DayCell.tsx`
 Single day tile in the grid. Renders:

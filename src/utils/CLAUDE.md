@@ -28,17 +28,17 @@ localStorage helpers.
 | `exportData()` | Download all entries as a JSON file |
 | `importData(file)` | Parse uploaded JSON file into `FoodEntry[]` |
 
-`exportData` / `importData` are implemented but not yet wired to UI buttons (Phase 2 backlog).
+`importData(file)` parses + validates uploads; `exportData()` is superseded by StatsView's inline export (which serializes from the in-memory `entries` prop, so cloud-synced data is included).
 
 ### `ai.ts`
-Google Gemini API helpers. All exports are no-ops / hidden when `AI_ENABLED` is `false`.
+Anthropic Claude API helpers (via `@anthropic-ai/sdk` with `dangerouslyAllowBrowser: true`). All exports are no-ops / hidden when `AI_ENABLED` is `false`.
 
 | Export | Description |
 |--------|-------------|
-| `AI_ENABLED` | `true` only when `VITE_GOOGLE_AI_API_KEY` is set |
+| `AI_ENABLED` | `true` only when `VITE_ANTHROPIC_API_KEY` is set |
 | `deriveTimeOfDay(hhmm)` | Maps HH:MM string → `TimeOfDay` bucket |
-| `analyzeFood(name)` | Text call to Gemini 1.5 Flash → category, allergens, nutrition |
-| `analyzeFoodImage(base64, mimeType)` | Vision call to Gemini 1.5 Flash → foodName, category, allergens, notes. Two-step fallback: if `foodName` is empty but `notes` has content, a second text call extracts the name. |
+| `analyzeFood(name)` | Text call to `claude-haiku-4-5` → category, allergens, nutrition |
+| `analyzeFoodImage(base64, mimeType)` | Vision call to `claude-sonnet-4-6` → foodName, category, allergens, notes. Two-step fallback: if `foodName` is empty but `notes` has content, a Haiku text call extracts the name. |
 
 ### `supabase.ts`
 Supabase client and typed query helpers. Active only when `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are set.

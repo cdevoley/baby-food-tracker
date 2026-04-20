@@ -150,7 +150,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
           const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
           resolve({ previewUrl: dataUrl, base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
         };
-        img.onerror = reject;
+        img.onerror = (err) => { URL.revokeObjectURL(objectUrl); reject(err); };
         img.src = objectUrl;
       }
     ).catch(() => null);
@@ -205,6 +205,7 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
   const handleSave = () => {
     if (!foodName.trim()) return;
     if (isEditMode && existingEntry && onUpdateEntry) {
+      const nameChanged = foodName.trim().toLowerCase() !== existingEntry.foodName.toLowerCase();
       onUpdateEntry(existingEntry.id, {
         foodName: foodName.trim(),
         foodCategory: category,
@@ -214,6 +215,10 @@ export default function AddFoodModal({ date, onClose, onSave, isFirstIntroductio
         amountEaten,
         enjoyment,
         allergens: selectedAllergens,
+        // Recompute only when the food name changes — otherwise keep original flag,
+        // since isFirstIntroduction() sees every entry including this one and would
+        // always return false for an unchanged edit.
+        ...(nameChanged ? { isFirstIntroduction: isFirstTry } : {}),
         hadReaction,
         reactionDelay: hadReaction ? reactionDelay : null,
         symptoms: hadReaction ? selectedSymptoms : [],

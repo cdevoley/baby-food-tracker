@@ -2,7 +2,7 @@
 
 Entry point is `main.tsx` → mounts `App.tsx`.
 
-`App.tsx` owns the top-level view state (`calendar | history | stats`), consumes `useFoodEntries`, and passes data down to the three view components. The `BABY_NAME` constant here is a placeholder until the baby profile screen is built.
+`App.tsx` owns top-level view state (`calendar | history | stats`), theme preference, baby profile, auth session, and the `editingEntry` modal state. It consumes `useFoodEntries` + `useAuth` and passes data down to the three view components. Baby name/DOB/start-date are loaded via `loadProfile()` (localStorage) and rendered through `SettingsModal`.
 
 ## Sub-modules
 
